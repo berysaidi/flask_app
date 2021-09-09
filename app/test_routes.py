@@ -33,22 +33,37 @@ class TestAPI(TestCase):
         app.config['LIVESERVER_TIMEOUT'] = 10
         return app
 
-    def test_bad_format_401(self):
-        self.client.environ_base['x-authentication-token'] = 'Bearer token'
-        self.client.environ_base['x-client-id'] = 'clientId'
-        # introduce error in mac address format
-        response = self.client.post("/profiles/clientId:09:08")
-        # expect 401 and error codes
-        self.assertEqual(response.status, '401 UNAUTHORIZED')
+    def test_bad_format(self):
+        headers = { 'x-client-id' : 'client',
+        'Content-Type' : 'application/json'}
+
+        # get token to communicate 
+        response = self.client.post("/login", headers=headers)
+        self.assertEqual(response.status, '200 OK')
         data = json.loads(response.data)
-        self.assertEqual(data["error"], "Conflict")
-        self.assertEqual(data["statusCode"], 401)
-        self.assertEqual(data["message"], "invalid clientId or token supplied")
+        token = data["access_token"]
+
+        headers['x-authentication-token'] = 'Bearer %s' % token
+
+        response = self.client.post("/profiles/clientId:09:08", headers=headers)
+        # expect 401 and error codes
+        self.assertEqual(response.status, '404 NOT FOUND')
+        data = json.loads(response.data)
+        self.assertEqual(data["error"], "Not Found")
+        self.assertEqual(data["statusCode"], 404)
+        self.assertEqual(data["message"], "profile of client %s does not exist" % "09:08")
 
     def test_json_data_409(self):
-        headers = {'x-authentication-token' : 'Bearer your_token',
-        'x-client-id' : 'clientId',
+        headers = { 'x-client-id' : 'client',
         'Content-Type' : 'application/json'}
+
+        # get token to communicate 
+        response = self.client.post("/login", headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        data = json.loads(response.data)
+        token = data["access_token"]
+        # append it to the header
+        headers['x-authentication-token'] = 'Bearer %s' % token
 
         response = self.client.post("/profiles/clientId:9c:eb:e8:8e:3b:00", headers=headers)
 
@@ -58,9 +73,17 @@ class TestAPI(TestCase):
         self.assertEqual(data["statusCode"], 409)
 
     def test_good_format_200(self):
-        headers = {'x-authentication-token' : 'Bearer your_token',
-        'x-client-id' : 'clientId',
+        headers = { 'x-client-id' : 'client',
         'Content-Type' : 'application/json'}
+
+        # get token to communicate 
+        response = self.client.post("/login", headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        data = json.loads(response.data)
+        token = data["access_token"]
+
+        # append it to the header
+        headers['x-authentication-token'] = 'Bearer %s' % token
 
         response = self.client.post("/profiles/clientId:9c:eb:e8:8e:3b:00", headers=headers, data=json.dumps(PROFILE))
 
@@ -70,9 +93,16 @@ class TestAPI(TestCase):
 
 
     def test_profile_error_404(self):
-        headers = {'x-authentication-token' : 'Bearer your_token',
-        'x-client-id' : 'clientId',
+        headers = { 'x-client-id' : 'client',
         'Content-Type' : 'application/json'}
+
+        # get token to communicate 
+        response = self.client.post("/login", headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        data = json.loads(response.data)
+        token = data["access_token"]
+
+        headers['x-authentication-token'] = 'Bearer %s' % token
 
         response = self.client.post("/profiles/clientId:%s" % "823f3161ae4f4495bf0a90c00a7dfbff", headers=headers, data=json.dumps(PROFILE))
 

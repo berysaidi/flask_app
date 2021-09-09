@@ -1,4 +1,4 @@
-# Schema used to validate request data
+''' Schema used to validate request data '''
 SCHEMA = {
     "type" : "object",
     "properties" : {
