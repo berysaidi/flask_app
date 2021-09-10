@@ -33,9 +33,37 @@ class TestAPI(TestCase):
         app.config['LIVESERVER_TIMEOUT'] = 10
         return app
 
+    def test_good_register(self):
+        headers = { 'x-client-id' : 'client',
+        'Content-Type' : 'application/json'}
+
+        # add client to database
+        response = self.client.post("/register", headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        data = json.loads(response.data)
+        self.assertEqual(data.endswith("has been registered."), True)
+
+    def test_bad_register(self):
+        headers = {'Content-Type' : 'application/json'}
+
+        # register without proper header
+        response = self.client.post("/register", headers=headers)
+        # expect 401 and error codes
+        self.assertEqual(response.status, '401 UNAUTHORIZED')
+        data = json.loads(response.data)
+        self.assertEqual(data["error"], "Conflict")
+        self.assertEqual(data["statusCode"], 401)
+        self.assertEqual(data["message"], "Missing client id to register")
+
+
     def test_bad_format(self):
         headers = { 'x-client-id' : 'client',
         'Content-Type' : 'application/json'}
+
+        response = self.client.post("/register", headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        data = json.loads(response.data)
+        self.assertEqual(data.endswith("has been registered."), True)
 
         # get token to communicate 
         response = self.client.post("/login", headers=headers)
@@ -57,6 +85,11 @@ class TestAPI(TestCase):
         headers = { 'x-client-id' : 'client',
         'Content-Type' : 'application/json'}
 
+        response = self.client.post("/register", headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        data = json.loads(response.data)
+        self.assertEqual(data.endswith("has been registered."), True)
+
         # get token to communicate 
         response = self.client.post("/login", headers=headers)
         self.assertEqual(response.status, '200 OK')
@@ -75,6 +108,10 @@ class TestAPI(TestCase):
     def test_good_format_200(self):
         headers = { 'x-client-id' : 'client',
         'Content-Type' : 'application/json'}
+        response = self.client.post("/register", headers=headers)
+        self.assertEqual(response.status, '200 OK')
+        data = json.loads(response.data)
+        self.assertEqual(data.endswith("has been registered."), True)
 
         # get token to communicate 
         response = self.client.post("/login", headers=headers)

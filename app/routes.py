@@ -11,8 +11,9 @@ from flask_jwt_extended import create_access_token
 from flask_jwt_extended import get_jwt_identity
 from flask_jwt_extended import jwt_required
 
-from app import app, cache
+from app import app, cache, db
 from app.schema import SCHEMA
+from app.models import User
 
 
 @cache.cached()
@@ -27,6 +28,23 @@ def read_macs():
         macs.pop(0)
         return macs
 
+@app.route("/register", methods=["POST"])
+def register():
+    ''' Register some users for demo purposes '''
+    try:
+        client = request.headers['x-client-id']
+    except KeyError:
+        return make_response({'statusCode': 401, 'error': 'Conflict',
+                             'message': 'Missing client id to register'}), 401
+    client = User(client)
+    # Flask-SQLAlchemy magic adds record to database
+    db.session.add(client)
+    db.session.commit()
+    # create a message to send to the template
+    message = f"The client {client} has been registered."
+    return jsonify(message), 200
+
+
 @app.route("/login", methods=["POST"])
 def login():
     ''' Create a route to authenticate your users and return JWTs. The
@@ -39,8 +57,9 @@ def login():
         return make_response({'statusCode': 401, 'error': 'Conflict',
                              'message': 'invalid clientId or token supplied'}), 401
 
-    # TODO : check clientID in db
-    if client != "client":
+    # check clientID in db
+    db_client = User.query.filter_by(name=client).first()
+    if db_client == None:
         return make_response({'statusCode': 401, 'error': 'Conflict',
                              'message': 'invalid clientId or token supplied'}), 401
 
@@ -56,8 +75,11 @@ def post_profile(mac):
     # Check the header information
     # Access the identity of the current user with get_jwt_identity
     current_user = get_jwt_identity()
-    # TODO: check clientID in db
-    if current_user != 'client':
+
+    # Check clientID in db
+    query = User.query.filter_by(name=current_user).first()
+
+    if query == None:
         return make_response({'statusCode': 401, 'error': 'Conflict',
                              'message': 'invalid clientId or token supplied'}), 401
 

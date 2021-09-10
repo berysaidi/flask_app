@@ -19,9 +19,18 @@ docker run -it -p 5000:5000 flask-app
 ```
 
 # Manual Testing
-* Get the Token
 ```
-curl -X POST 127.0.0.1:5000/login -H "Content-Type: application/json" -H "x-client-id: client"
+export CLIENT=client
+```
+* Register a user
+```
+ curl -X POST 127.0.0.1:5000/register -H "Content-Type: application/json" -H "x-client-id: $CLIENT"
+ "The client <client> has been registered."
+```
+
+* Get the Token for the user
+```
+curl -X POST 127.0.0.1:5000/login -H "Content-Type: application/json" -H "x-client-id: $CLIENT"
 
 {
   "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmcmVzaCI6ZmFsc2UsImlhdCI6MTYzMTI0OTE3NiwianRpIjoiYjA4YzMwNzktOWNkMC00N2FjLWFhNDMtMDY4YTgyYmE5NTQxIiwidHlwZSI6ImFjY2VzcyIsInN1YiI6ImNsaWVudCIsIm5iZiI6MTYzMTI0OTE3NiwiZXhwIjoxNjMxMjUwMDc2fQ.yllmNZhV8HADQNUClee0r2uj7OUvgNm4uA-W89dX3xo"
@@ -36,7 +45,7 @@ export TOKEN="access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJmcmVzaCI6Z
 ```
 * Post your good profile
 ```
-curl -X POST 127.0.0.1:5000/profiles/clientId:9c:eb:e8:8e:3b:00 -H "Content-Type: application/json" -H "x-authentication-token: Bearer $TOKEN" -H "x-client-id: client" -d @profile.json
+curl -X POST 127.0.0.1:5000/profiles/clientId:9c:eb:e8:8e:3b:00 -H "Content-Type: application/json" -H "x-authentication-token: Bearer $TOKEN" -H "x-client-id: $CLIENT" -d @profile.json
 {
   "profile": {
     "applications": [
@@ -60,7 +69,7 @@ curl -X POST 127.0.0.1:5000/profiles/clientId:9c:eb:e8:8e:3b:00 -H "Content-Type
 
 * Post your bad profile
 ```
-curl -X POST 127.0.0.1:5000/profiles/clientId:9c:eb:e8:8e:3b:00 -H "Content-Type: application/json" -H "x-authentication-token: Bearer $TOKEN" -H "x-client-id: client" -d @profile_wrong.json
+curl -X POST 127.0.0.1:5000/profiles/clientId:9c:eb:e8:8e:3b:00 -H "Content-Type: application/json" -H "x-authentication-token: Bearer $TOKEN" -H "x-client-id: $CLIENT" -d @profile_wrong.json
 {
   "error": "Conflict",
   "message": "data error",
@@ -71,13 +80,11 @@ curl -X POST 127.0.0.1:5000/profiles/clientId:9c:eb:e8:8e:3b:00 -H "Content-Type
 
 Tokens must be refreshed every 15 minutes
 ```
-$ curl -X POST 127.0.0.1:5000/profiles/clientId:9c:eb:e8:8e:3b:00 -H "Content-Type: application/json" -H "x-authentication-token: Bearer $TOKEN" -H "x-client-id: client" -d @profile.json
+$ curl -X POST 127.0.0.1:5000/profiles/clientId:9c:eb:e8:8e:3b:00 -H "Content-Type: application/json" -H "x-authentication-token: Bearer $TOKEN" -H "x-client-id: $CLIENT" -d @profile.json
 {
 	  "msg": "Token has expired"
 }
 ```
-
-* It's important to note that I haven't had the time implement a database for users (or stations) so the only client acceptable is indeed "client"
 
 * If you want to test it with the running image, and docker fails to map ports you can run the few greps inside the app's running container
 ```
